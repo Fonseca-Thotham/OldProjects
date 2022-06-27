@@ -4,7 +4,7 @@ import Header from './Header';
 import getMusics from '../services/musicsAPI';
 import MusicCard from './MusicCard';
 import Loading from './Loading';
-import { addSong, removeSong } from '../services/favoriteSongsAPI';
+import { addSong, removeSong, getFavoriteSongs } from '../services/favoriteSongsAPI';
 
 class Album extends React.Component {
   state = {
@@ -15,38 +15,50 @@ class Album extends React.Component {
     favMusic: [],
   }
 
-  componentDidMount() {
+  componentDidMount = async () => {
     this.getSongs();
+    const savedMusic = await getFavoriteSongs();
+    this.setState({ favMusic: savedMusic });
   }
 
-  addFavorite = async (event, songID) => {
-    const { albumSongs, favMusic } = this.state;
+  editFavorite = async (event, fullSong) => {
+    const { favMusic } = this.state;
     this.setState({ loading: true });
-    const favorite = albumSongs.find((song) => (
-      song.trackId === songID
+    const favSong = favMusic.some((song) => (
+      song.trackId === fullSong.trackId
     ));
-    if (favMusic.includes(favorite)) {
-      const newFavMusic = favMusic.filter((song) => song.trackId !== songID);
-      this.setState({ favMusic: newFavMusic });
-      await removeSong(favorite);
+    if (favSong) {
+      const newFavMusic = favMusic.filter((song) => song.trackId !== fullSong.trackId);
+      this.setState({ favMusic: newFavMusic, loading: false });
+      await removeSong(fullSong);
+    } else {
+      this.setState((prevState) => ({
+        favMusic: [...prevState.favMusic, fullSong],
+      }));
+      await addSong(fullSong);
+      this.setState({ loading: false });
     }
-    if (!favMusic.includes(favorite)) {
-      favMusic.push(favorite);
-      await addSong(favorite);
-    }
-    this.setState({ loading: false });
   };
 
   getSongs = async () => {
     const { match: { params: { id } } } = this.props;
     const result = await getMusics(id);
-    const songs = result[0];
-    const { artistName, collectionName } = songs;
+    const songsOnly = result[0];
+    const { artistName, collectionName } = songsOnly;
     this.setState({ albumSongs: result, artist: artistName, album: collectionName });
+  }
+
+  someFunction = (fullSong) => {
+    const { favMusic } = this.state;
+    const favSong = favMusic.some((song) => (
+      song.trackId === fullSong.trackId
+    ));
+    return favSong;
   }
 
   render() {
     const { albumSongs, artist, album, loading } = this.state;
+
     const contentScreen = (
       <section>
         <div>
@@ -63,11 +75,14 @@ class Album extends React.Component {
               trackName={ song.trackName }
               previewUrl={ song.previewUrl }
               trackId={ song.trackId }
-              loadScreen={ (event) => this.addFavorite(event, song.trackId) }
+              song={ song }
+              loadScreen={ (event) => this.editFavorite(event, song) }
+              check={ this.someFunction }
             />
           ))}
       </section>
     );
+
     return (
       <div data-testid="page-album">
         <Header />

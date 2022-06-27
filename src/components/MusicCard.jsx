@@ -2,27 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 class MusicCard extends React.Component {
-  state = {
-    isChecked: false,
-  }
-
-  componentDidMount() {
-    const { trackId } = this.props;
-    this.isItChecked(trackId);
-  }
-
-  isItChecked = (id) => {
-    const favSongsList = JSON.parse(localStorage.getItem('favorite_songs'));
-    if (favSongsList.length > 0) {
-      const isIt = favSongsList.some((song) => song.trackId === id);
-      this.setState({ isChecked: isIt });
-    }
-  }
-
   render() {
-    const { trackName, previewUrl, trackId, loadScreen } = this.props;
-    const { isChecked } = this.state;
-    return (
+    const { trackName, previewUrl, trackId, loadScreen, check, song } = this.props;
+    const screenContent = (
       <section>
         <p>{ trackName }</p>
         <audio data-testid="audio-component" src={ previewUrl } controls>
@@ -35,12 +17,18 @@ class MusicCard extends React.Component {
           Favorita
           <input
             type="checkbox"
-            checked={ isChecked }
+            checked={ check(song) }
             data-testid={ `checkbox-music-${trackId}` }
             onChange={ loadScreen }
           />
         </label>
       </section>
+    );
+
+    return (
+      <div>
+        { screenContent}
+      </div>
     );
   }
 }
@@ -50,6 +38,10 @@ MusicCard.propTypes = {
   previewUrl: PropTypes.string.isRequired,
   trackId: PropTypes.number.isRequired,
   loadScreen: PropTypes.func.isRequired,
+  check: PropTypes.func.isRequired,
+  song: PropTypes.shape({}).isRequired
+
+  ,
 };
 
 export default MusicCard;
