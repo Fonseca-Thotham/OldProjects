@@ -21,7 +21,7 @@ class Album extends React.Component {
     this.setState({ favMusic: savedMusic });
   }
 
-  editFavorite = async (event, fullSong) => {
+  editFavorite = async (fullSong) => {
     const { favMusic } = this.state;
     this.setState({ loading: true });
     const favSong = favMusic.some((song) => (
@@ -29,8 +29,9 @@ class Album extends React.Component {
     ));
     if (favSong) {
       const newFavMusic = favMusic.filter((song) => song.trackId !== fullSong.trackId);
-      this.setState({ favMusic: newFavMusic, loading: false });
+      this.setState({ favMusic: newFavMusic });
       await removeSong(fullSong);
+      this.setState({ loading: false });
     } else {
       this.setState((prevState) => ({
         favMusic: [...prevState.favMusic, fullSong],
@@ -76,7 +77,7 @@ class Album extends React.Component {
               previewUrl={ song.previewUrl }
               trackId={ song.trackId }
               song={ song }
-              loadScreen={ (event) => this.editFavorite(event, song) }
+              loadScreen={ () => this.editFavorite(song) }
               check={ this.someFunction }
             />
           ))}
